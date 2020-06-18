@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 mhunter
+ * Copyright (c) 2020 Mark A. Hunter (ACT Health)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,97 +22,139 @@
 package net.fhirfactory.pegacorn.common.model;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  *
  * @author Mark A. Hunter
  */
 public class RDN {
+	private static final Logger LOG = LoggerFactory.getLogger(RDN.class);
 
-	private JSONObject rdnValue;
+	private String nameValue;
+	private String nameType;
 
+	@JsonIgnore
 	public static String RDN_SEPARATOR = "=";
+
+	private static final String tokenQualifierTypeName = "Type";
+	private static final String tokenQualifierTypeValue = "Value";
+
+	@JsonIgnore
+	public RDNToken token;
+
+	@JsonIgnore
+	private String rdnToString;
 	
-	public static final String rdnQualifierType = "type";
-	public static final String rdnQualifierValue = "value";
+	private String rdnAsConciseString;
 
-	public String BAD_NAME_VALUE = "ERROR_BAD_NAME_VALUE";
-	public String BAD_NAME_TYPE = "ERROR_BAD_NAME_TYPE";
-
-	public String rdnAsQualifiedString;
-	public String rdnToString;
-
+	@JsonIgnore
 	public RDN(String nameType, String nameValue) {
-		if (nameType == null) {
-			nameType = BAD_NAME_TYPE;
+		LOG.debug(".RND(String, String): Entry, nameType --> {}, nameValue --> {}", nameType, nameValue);
+		if ((nameType == null) || (nameValue == null)) {
+			throw (new IllegalArgumentException("null nameType or nameValue passed to Constructor"));
 		}
-		if (nameType.isEmpty()) {
-			nameType = BAD_NAME_TYPE;
+		if ((nameType.isEmpty()) || (nameValue.isEmpty())) {
+			throw (new IllegalArgumentException("Empty nameType or nameValue passed to Constructor"));
 		}
-		if (nameValue == null) {
-			nameValue = BAD_NAME_VALUE;
-		}
-		if (nameValue.isEmpty()) {
-			nameValue = BAD_NAME_VALUE;
-		}
-		this.rdnValue.put(rdnQualifierValue, nameValue);
-		this.rdnValue.put(rdnQualifierType, nameType);
+		this.nameValue = new String(nameValue);
+		this.nameType = new String(nameType);
 		convertToString();
-		toJSONString();
+		createToken();
+		convertToConciseString();
 	}
 
+	@JsonIgnore
 	public RDN(RDN otherRDN) {
-		rdnValue = new JSONObject();
-		if (otherRDN != null) {
-			rdnValue.put(rdnQualifierType, otherRDN.rdnValue.getString(rdnQualifierType));
-			rdnValue.put(rdnQualifierValue, otherRDN.rdnValue.getString(rdnQualifierValue));
-			convertToString();
-			toJSONString();
+		if (otherRDN == null) {
+			throw (new IllegalArgumentException("null otherRDN passed to copy Constructor"));
 		}
+		this.nameType = new String(otherRDN.getNameType());
+		this.nameValue = new String(otherRDN.getNameValue());
+		convertToString();
+		createToken();
+		convertToConciseString();
 	}
-	
-	public RDN(String qualifiedString) {
-		if(qualifiedString != null) {
-			try {
-				this.rdnValue = new JSONObject(qualifiedString);
-			} catch(Exception jsonEx) {
-				// do nothing.
-			}
+
+	@JsonIgnore
+	public RDN(RDNToken token) {
+		LOG.debug(".RND(RDNToken): Entry, token --> {}", token);
+		if (token == null) {
+			throw (new IllegalArgumentException("null RDNToken passed to Constructor"));
 		}
+
+		try {
+			JSONObject jsonToken = new JSONObject(token.getContent());
+			LOG.trace(".RND(RDNToken): Converted Token into JSONObject --> {}", jsonToken);
+			if((!jsonToken.has(tokenQualifierTypeName)) || (!jsonToken.has(tokenQualifierTypeValue)) ) {
+				throw (new IllegalArgumentException("invalid RDNToken passed to Constructor"));
+			}
+			LOG.trace(".RND(RDNToken): JSONObject has both Type and Value entries!");
+			this.nameType = new String(jsonToken.getString(tokenQualifierTypeName));
+			this.nameValue = new String(jsonToken.getString(tokenQualifierTypeValue));
+		} catch (Exception jsonEx) {
+			throw (new IllegalArgumentException(jsonEx.getMessage()));
+		}
+		LOG.trace(".RND(RDNToken): new RDN created, now building different String values!");
+		convertToString();
+		createToken();
+		convertToConciseString();
+		LOG.trace(".RND(RDNToken): new RDN --> {}", this.rdnToString);
 	}
 
 	public String getNameType() {
-		return (this.rdnValue.getString(rdnQualifierType));
+		return (this.nameType);
 	}
 
+	@JsonIgnore
 	public void setNameType(String newNameType) {
-		this.rdnValue.put(rdnQualifierType, newNameType);
-		toJSONString();
+		this.nameType = new String(newNameType);
+		convertToString();
+		createToken();
 	}
 
 	public String getNameValue() {
-		return(this.rdnValue.getString(rdnQualifierValue));
+		return (this.nameValue);
 	}
 
+	@JsonIgnore
 	public void setNameValue(String newNameValue) {
-		this.rdnValue.put(rdnQualifierValue, newNameValue);
-		toJSONString();
+		this.nameValue = new String(newNameValue);
+		convertToString();
+		createToken();
 	}
 
 	@Override
 	public String toString() {
 		return (this.rdnToString);
 	}
-	
-	public void convertToString() {
-		this.rdnToString = "(" + this.rdnValue.getString(rdnQualifierType) + RDN_SEPARATOR + this.rdnValue.getString(rdnQualifierValue) + ")";
+
+	@JsonIgnore
+	private void convertToString() {
+		this.rdnToString = "[RDN=(" + this.nameType + RDN_SEPARATOR + this.nameValue + ")]";
 	}
 
-	public void toJSONString() {
-		this.rdnAsQualifiedString = rdnValue.toString();
+	@JsonIgnore
+	private void createToken() {
+		JSONObject newToken = new JSONObject();
+		newToken.put(tokenQualifierTypeName, this.nameType);
+		newToken.put(tokenQualifierTypeValue, this.nameValue);
+		this.token = new RDNToken(newToken.toString());
+	}
+
+	@JsonIgnore
+	public RDNToken getToken() {
+		return (this.token);
 	}
 	
-	public String asQaulifiedString() {
-		return(this.rdnAsQualifiedString);
+	public String getConciseString() {
+		return(this.rdnAsConciseString);
+	}
+	
+	private void convertToConciseString() {
+		this.rdnAsConciseString = "("+ this.nameType + RDN_SEPARATOR + this.nameValue + ")";
 	}
 }

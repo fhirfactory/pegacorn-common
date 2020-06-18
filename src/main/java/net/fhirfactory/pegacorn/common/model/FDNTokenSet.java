@@ -26,67 +26,67 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class FDNSet {
-	private LinkedHashSet<FDN> elements;
+public class FDNTokenSet {
+	private LinkedHashSet<FDNToken> elements;
 	private String fdnSetAsString;
 
-	public FDNSet() {
+	public FDNTokenSet() {
 		elements = new LinkedHashSet<>();
 		fdnSetAsString = new String();
 	}
 
-	public FDNSet(FDNSet originalSet) {
+	public FDNTokenSet(FDNTokenSet originalSet) {
 		elements = new LinkedHashSet<>();
 		if (originalSet != null) {
-			Iterator<FDN> originalSetIterator = originalSet.getElements().iterator();
+			Iterator<FDNToken> originalSetIterator = originalSet.getElements().iterator();
 			while (originalSetIterator.hasNext()) {
-				FDN newFDN = new FDN(originalSetIterator.next());
+				FDNToken newFDN = new FDNToken(originalSetIterator.next());
 				elements.add(newFDN);
 			}
 		}
 		generateString();
 	}
 
-	public Set<FDN> getElements() {
+	public Set<FDNToken> getElements() {
 		return (elements);
 	}
 
-	public void setElements(Set<FDN> newElementSet) {
+	public void setElements(Set<FDNToken> newElementSet) {
 		elements.clear();
 		if (newElementSet == null) {
 			return;
 		}
-		Iterator<FDN> fdnIterator = newElementSet.iterator();
+		Iterator<FDNToken> fdnIterator = newElementSet.iterator();
 		while (fdnIterator.hasNext()) {
-			FDN fdnCopy = new FDN(fdnIterator.next());
+			FDNToken fdnCopy = new FDNToken(fdnIterator.next());
 			elements.add(fdnCopy);
 		}
 		generateString();
 	}
 
-	public void addElement(FDN newFDN) {
-		Iterator<FDN> setIterator = elements.iterator();
+	public void addElement(FDNToken newFDNToken) {
+		Iterator<FDNToken> setIterator = elements.iterator();
 		boolean isAlreadyPresent = false;
 		while (setIterator.hasNext()) {
-			FDN currentFDN = setIterator.next();
-			if (currentFDN.equals(newFDN)) {
+			FDNToken currentFDN = setIterator.next();
+			if (currentFDN.equals(newFDNToken)) {
 				isAlreadyPresent = true;
 				break;
 			}
 		}
 		if (!isAlreadyPresent) {
-			FDN toBeAddedFDN = new FDN(newFDN);
+			FDNToken toBeAddedFDN = new FDNToken(newFDNToken);
 			elements.add(toBeAddedFDN);
 			generateString();
 		}
 	}
 
-	public void removeElement(FDN theFDN) {
-		Iterator<FDN> setIterator = elements.iterator();
+	public void removeElement(FDNToken theFDNToken) {
+		Iterator<FDNToken> setIterator = elements.iterator();
 		boolean isAlreadyPresent = false;
 		while (setIterator.hasNext()) {
-			FDN currentFDN = setIterator.next();
-			if (currentFDN.equals(theFDN)) {
+			FDNToken currentFDN = setIterator.next();
+			if (currentFDN.equals(theFDNToken)) {
 				elements.remove(currentFDN);
 				generateString();
 				break;
@@ -108,9 +108,9 @@ public class FDNSet {
 		}
 		String newString = new String("{FDNSet=(");
 		int counter = 0;
-		Iterator<FDN> setIterator = elements.iterator();	
+		Iterator<FDNToken> setIterator = elements.iterator();	
 		while (setIterator.hasNext()) {
-			FDN currentFDN = setIterator.next();
+			FDNToken currentFDN = setIterator.next();
 			newString = newString + "[" + Integer.toString(counter) + "][" + currentFDN.toString() + "]";
 			counter += 1;
 		}

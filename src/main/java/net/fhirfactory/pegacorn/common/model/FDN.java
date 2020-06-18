@@ -21,38 +21,45 @@
  */
 package net.fhirfactory.pegacorn.common.model;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
+
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  *
  * @author Mark A. Hunter (ACT Health)
- * @since 01-Jun-2020
+ * @since 01-June-2020
  *
  */
 public class FDN {
 	private static final Logger LOG = LoggerFactory.getLogger(FDN.class);
-	private RDNSet rdnElementSet;
-	private Integer numberOfRDNs;
-	private String fdnAsString;
+	private HashMap<Integer, RDN> rdnSet;
+	private Integer rdnCount;
+	private FDNToken token;
+	private String fdnToString;
 
-	public static String RDN_STRING_ENTRY_SEPERATOR = "::";
-	public static String FDN_STRING_PREFIX = "[FDN:";
-	public static String FDN_STRING_SUFFIX = "]";
+	private static final String RDN_TO_STRING_ENTRY_SEPERATOR = ".";
+	private static final String FDN_TO_STRING_PREFIX = "[FDN:";
+	private static final String FDN_TO_STRING_SUFFIX = "]";
+	
+	private static final String FDN_TOKEN_PREFIX = "{FDNToken:";
+	private static final String FDN_TOKEN_SUFFIX = "}";
 
 	/**
 	 * Default Constructor
 	 */
 	public FDN() {
 		LOG.trace(".FDN(): Default constructor invoked.");
-		this.rdnElementSet = new RDNSet();
-		this.numberOfRDNs = 0;
-		this.fdnAsString = new String();
+		this.rdnSet = new HashMap<Integer, RDN>();
+		this.rdnCount = 0;
+		LOG.trace(".FDN(): this.rdnElementSet intialised.");
+		this.token = new FDNToken();
+		this.fdnToString = new String();
 	}
 
 	/**
@@ -63,121 +70,200 @@ public class FDN {
 	 */
 	public FDN(FDN originalFDN) {
 		LOG.trace(".FDN( FDN originalFDN ): Constructor invoked, originalFDN --> {}", originalFDN);
-		this.rdnElementSet = new HashMap<Integer, RDN>();
 		if (originalFDN == null) {
-			return;
+			throw (new IllegalArgumentException("Empty FDN passed to copy Constructor"));
 		}
-		this.numberOfRDNs = originalFDN.getNumberOfRDNs();
-		Map<Integer, RDN> originalRDNSet = originalFDN.getRDNSet();
-		int fdnSize = originalFDN.getNumberOfRDNs();
-		LOG.trace(".FDN( FDN originalFDN ): originalFDN Size = {}", fdnSize);
-		for (int counter = 0; counter < fdnSize; counter += 1) {
-			LOG.trace(".FDN( FDN originalFDN ): originalRDNSet.get({}) --> {}", counter, originalRDNSet.get(counter));
-			rdnElementSet.put(counter, originalRDNSet.get(counter));
+		// Essentially, we iterate through the HashMap from the OriginalFDN, 
+		// create new RDN's from the content, and append these RDN's (in the 
+		// appropriate order) into the new FDN.
+		this.rdnSet = new HashMap<Integer, RDN>();
+		this.rdnCount = originalFDN.getRDNCount();
+		Map<Integer, RDN> otherRDNSet = originalFDN.getRDNSet();
+		if(otherRDNSet.keySet().size() != originalFDN.getRDNCount()) {
+			throw (new IllegalArgumentException("Malformed FDN passed to copy Constructor"));
 		}
-		if (LOG.isTraceEnabled()) {
-			int newFDNSize = rdnElementSet.size();
-			LOG.trace(".FDN( FDN originalFDN ): rdnElementSet Size = {}", newFDNSize);
-			for (int newCounter = 0; newCounter < fdnSize; newCounter += 1) {
-				LOG.trace(".FDN( FDN originalFDN ): rdnElementSet.get({}) --> {}", newCounter,
-						rdnElementSet.get(newCounter));
+		for(int counter = 0; counter < this.getRDNCount(); counter++ ) {
+			this.rdnSet.put(counter, otherRDNSet.get(counter));
+		}
+		// We need to pre-build the toString() and getToken() content so we don't re-do it 
+		// every time we do some comparison etc.
+		generateToString();
+		generateToken();
+		LOG.trace(".FDN( FDN originalFDN ): generatedFDN = {}", this.fdnToString);
+	}
+	
+	/**
+	 * This constructor uses an FDNToken to construct a new FDN.
+	 * 
+	 * @param token An FDNToken from which the FDN may be instantiated.
+	 */
+
+	public FDN(FDNToken token) {
+		LOG.trace(".FDN( FDNToken token ): Constructor invoked, token --> {}", token);
+		if (token == null) {
+			throw (new IllegalArgumentException("Empty parameter passed to Constructor"));
+		}
+		String tokenContent = token.getContent();
+		// The FDNToken is really just a JSONObject.toString() with an FDN_TOKEN_PREFIX and FDN_TOKEN_SUFFIX
+		// added to it. So, to be useful, we need to strip those two strings from the FDNToken.content.
+		if((!tokenContent.startsWith(FDN_TOKEN_PREFIX)) || (!tokenContent.endsWith(FDN_TOKEN_SUFFIX))) {
+			throw (new IllegalArgumentException("Badly formed FDNToken passed to Constructor --> " + token.getContent()));
+		}
+		String fdnTokenPrefixRemoved = tokenContent.substring(FDN_TOKEN_PREFIX.length(), (tokenContent.length())); 
+		String actualToken = fdnTokenPrefixRemoved.substring(0,(fdnTokenPrefixRemoved.length()-FDN_TOKEN_SUFFIX.length()));
+		// Now we have a nice string that should allow for parsing/loading into a JSONObject. This will allow us to 
+		// work with the individual elements (which are, in fact, just <counter, RDN> values).
+		LOG.trace(".FDN( FDNToken token ): After removing the FDN prefix/suffix details, the actual Token content is --> {}", actualToken);
+		try {
+			JSONObject tokenAsRDNSet = new JSONObject(actualToken);
+			int setSize = tokenAsRDNSet.length();
+			LOG.trace(".FDN( FDNToken token ): The number of RDN entries in the Token is --> {}", setSize);
+			this.rdnSet = new HashMap<Integer,RDN>();
+			// We are going to take the content from the FDNToken, convert it to a JSONObject, and then
+			// iterate through the elements (the JSONObject will have values <counter, string> in it.
+			// We then take the string from the JSONObject, which is, in fact, an RDNToken and then
+			// instantiate an RDN(RDNToken). The resulting RDN is then added to the rdnSet map.
+			for(int counter = 0; counter < setSize; counter++ ) {
+				LOG.trace(".FDN( FDNToken token ): Iterating through the extracted Token JSONObject, attempting to extract RDN[{}]", counter);
+				String currentRDNTokenContent = tokenAsRDNSet.getString(Integer.toString(counter));
+				LOG.trace(".FDN( FDNToken token ): Iterating through the extracted Token JSONObject, extracted RDN Token Content --> {}", currentRDNTokenContent);
+				RDNToken currentRDNToken = new RDNToken(currentRDNTokenContent);
+				RDN currentRDN = new RDN(currentRDNToken);
+				LOG.trace(".FDN( FDNToken token ): Iterating through the extracted RDNs, current RDN --> {}", currentRDN);
+				this.rdnSet.put(counter, currentRDN);
 			}
+			this.rdnCount = setSize;
+		} catch (Exception jsonEx) {
+			throw (new IllegalArgumentException(jsonEx.getMessage()));
+			
 		}
-		generateString();
+		// We need to pre-build the toString() and getToken() content so we don't re-do it 
+		// every time we do some comparison etc.
+		generateToString();
+		generateToken();
 	}
 
-	public FDN(String stringFDN) {
-		LOG.trace(".FDN( String qualifiedFDN ): Constructor invoked, qualifiedFDN --> {}", stringFDN);
-		rdnElementSet = new HashMap<Integer, RDN>();
-		this.numberOfRDNs = 0;
-		populateFDN(stringFDN);
-		generateString();
-	}
-
-	public void appendRDN(RDN pRDN) {
-		rdnElementSet.put(this.getNumberOfRDNs(), pRDN);
-		this.numberOfRDNs += 1;
-		generateString();
-	}
-
-	public void populateFDN(String stringFDN) {
-		LOG.trace(".populateFDN(): Constructor invoked, stringFDN --> {}", stringFDN);
-		if (stringFDN == null) {
-			return;
+	/**
+	 * This method appends an RDN (Relative Distinguished Name) to an existing FDN. This makes the
+	 * RDN the "Least Significant" member.
+	 * 
+	 * @param toBeAddedRDN An RDN that should be appended (injected as the "Least Significant" member
+	 * of the FDN.
+	 */
+	public void appendRDN(RDN toBeAddedRDN) {
+		LOG.trace(".appendRDN(): Entry, toBeAddedRDN --> {}", toBeAddedRDN);
+		if (toBeAddedRDN == null) {
+			throw (new IllegalArgumentException("Empty RDN passed to appendRDN"));
 		}
-		if (stringFDN.isEmpty()) {
-			return;
-		}
-		
+		RDN newRDN = new RDN(toBeAddedRDN);
+		int existingSetSize = this.getRDNCount();
+		this.rdnSet.put(existingSetSize,newRDN);
+		this.rdnCount = existingSetSize + 1;
+		// We need to pre-build the toString() and getToken() content so we don't re-do it 
+		// every time we do some comparison etc.
+		generateToString();
+		generateToken();
 	}
 
 	@Override
-	public String toString(){
-		return(this.fdnAsString);
+	public String toString() {
+		return (this.fdnToString);
 	}
 
-	public void generateString() {
-		fdnAsString = new String();
-		if (!rdnElementSet.isEmpty()) {
-			fdnAsString = fdnAsString.concat(FDN_STRING_PREFIX);
-			int rdnCount = this.getNumberOfRDNs();
-			for (int counter = 0; counter < rdnCount; counter += 1) {
-				fdnAsString = fdnAsString.concat(this.rdnElementSet.get(counter).toString());
-				if (counter != (this.getNumberOfRDNs() - 1)) {
-					fdnAsString = fdnAsString.concat(RDN_STRING_ENTRY_SEPERATOR);
-				}
+	/**
+	 * This method pre-builds the FDN::toString() value. This value (this.fdnToString) cannot
+	 * be used as input into an FDN constructor and is made available only for the purposes of 
+	 * documentation and/or reporting.
+	 */
+	private void generateToString() {
+		fdnToString = new String();
+		fdnToString = fdnToString.concat(FDN_TO_STRING_PREFIX);
+		for(int counter = 0; counter < this.getRDNCount(); counter++) {
+			RDN currentRDN = this.rdnSet.get(counter);
+			String currentRDNString = currentRDN.getConciseString();
+			fdnToString = fdnToString.concat(currentRDNString);
+			if(counter != (this.getRDNCount()-1)) {
+				fdnToString = fdnToString.concat(RDN_TO_STRING_ENTRY_SEPERATOR);
 			}
-			fdnAsString = fdnAsString.concat(FDN_STRING_SUFFIX);
 		}
+		fdnToString = fdnToString.concat(FDN_TO_STRING_SUFFIX);
 	}
 
+	/**
+	 * FDNs are used to support hierarchical/containment models - where a Parent FDN
+	 * it total contained within the child FDN. For exmaple, for the following 
+	 * FDN:
+	 * 		FDN = (Campus=CHS).(Building=Bulding10),(Floor=3)
+	 * 
+	 * then the Campus element is the Parent of the Building element. Note that the
+	 * Floor=? element is the "Least Significant" element.
+	 * 
+	 * @return Returns the "Parent" FDN of this FDN. The "Parent" FDN is one that has
+	 * the current "Least Significant" member removed from it.
+	 */
 	public FDN getParentFDN() {
-		if (this.getNumberOfRDNs() <= 1) {
+		if (this.getRDNCount() <= 1) {
 			return null;
 		}
-		FDN parentFDN = new FDN();
-		for (int counter = 0; counter < (this.getNumberOfRDNs() - 1); counter += 1) {
-			parentFDN.appendRDN(this.rdnElementSet.get(counter));
+		FDN newParentFDN = new FDN();
+		for(int counter =0; counter < (this.getRDNCount()-2); counter++) {
+			RDN currentRDN = this.rdnSet.get(counter);
+			newParentFDN.appendRDN(currentRDN);
 		}
-		return (parentFDN);
+		return (newParentFDN);
 	}
 
 	public RDN getUnqualifiedRDN() {
-		if (rdnElementSet.isEmpty()) {
+		if (this.getRDNCount() <= 0){
 			return (null);
 		}
-		if (this.numberOfRDNs < 1) {
-			return (null);
-		}
-		RDN theRDN = this.rdnElementSet.get((this.getNumberOfRDNs() - 1));
-		return (theRDN);
+		RDN leastSignificantRDN = this.rdnSet.get((this.getRDNCount()-1));
+		return (leastSignificantRDN);
 	}
 
 	public boolean isEmpty() {
-		return (this.rdnElementSet.isEmpty());
+		if( this.getRDNCount() <= 0) {
+			return(true);
+		} else {
+			return(false);
+		}
 	}
-
+	
 	public Map<Integer, RDN> getRDNSet() {
-		return (this.rdnElementSet);
+		return(this.rdnSet);
 	}
 
-	public Integer getNumberOfRDNs() {
-		return (this.numberOfRDNs);
+	public int getRDNCount() {
+		return (this.rdnCount);
 	}
 
 	public boolean equals(FDN otherFDN) {
 		if (otherFDN == null) {
 			return (false);
 		}
-		if (getNumberOfRDNs() != otherFDN.getNumberOfRDNs()) {
+		if (getRDNCount() != otherFDN.getRDNCount()) {
 			return (false);
 		}
-		String thisFDNAsString = toString();
-		String otherFDNAsString = otherFDN.toString();
-		if (thisFDNAsString.contentEquals(otherFDNAsString)) {
+		String thisFDNToken = getToken().getContent();
+		String otherFDNToken = otherFDN.getToken().getContent();
+		if (thisFDNToken.contentEquals(otherFDNToken)) {
 			return (true);
 		} else {
 			return (false);
 		}
+	}
+
+	public FDNToken getToken() {
+		return (this.token);
+	}
+
+	private void generateToken() {
+		JSONObject newToken = new JSONObject();
+		for(int counter = 0; counter < this.getRDNCount(); counter++) {
+			RDN currentRDN = this.rdnSet.get(counter);
+			newToken.put(Integer.toString(counter), currentRDN.getToken().getContent());
+		}
+		String tokenString = FDN_TOKEN_PREFIX + newToken.toString() + FDN_TOKEN_SUFFIX;
+		this.token = new FDNToken(tokenString);
 	}
 }
