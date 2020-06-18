@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 mhunter
+ * Copyright (c) 2020 Mark A. Hunter (ACT Health)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,129 +22,162 @@
 package net.fhirfactory.pegacorn.common.model;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.ListIterator;
+import java.util.Map;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author Mark Hunter
+ * @author Mark A. Hunter (ACT Health)
+ * @since 01-Jun-2020
+ *
  */
 public class FDN {
+	private static final Logger LOG = LoggerFactory.getLogger(FDN.class);
+	private RDNSet rdnElementSet;
+	private Integer numberOfRDNs;
+	private String fdnAsString;
 
-    private JSONObject rdnElementSet;
+	public static String RDN_STRING_ENTRY_SEPERATOR = "::";
+	public static String FDN_STRING_PREFIX = "[FDN:";
+	public static String FDN_STRING_SUFFIX = "]";
 
-    public static String RDN_STRING_ENTRY_SEPERATOR = "|+|";
+	/**
+	 * Default Constructor
+	 */
+	public FDN() {
+		LOG.trace(".FDN(): Default constructor invoked.");
+		this.rdnElementSet = new RDNSet();
+		this.numberOfRDNs = 0;
+		this.fdnAsString = new String();
+	}
 
-    public FDN() {
-        rdnElementSet = new JSONObject();
-    }
+	/**
+	 * The Copy Constructor: It creates a duplicate of the original FDN
+	 * (instantiating new containing elements).
+	 *
+	 * @param originalFDN The original FDN
+	 */
+	public FDN(FDN originalFDN) {
+		LOG.trace(".FDN( FDN originalFDN ): Constructor invoked, originalFDN --> {}", originalFDN);
+		this.rdnElementSet = new HashMap<Integer, RDN>();
+		if (originalFDN == null) {
+			return;
+		}
+		this.numberOfRDNs = originalFDN.getNumberOfRDNs();
+		Map<Integer, RDN> originalRDNSet = originalFDN.getRDNSet();
+		int fdnSize = originalFDN.getNumberOfRDNs();
+		LOG.trace(".FDN( FDN originalFDN ): originalFDN Size = {}", fdnSize);
+		for (int counter = 0; counter < fdnSize; counter += 1) {
+			LOG.trace(".FDN( FDN originalFDN ): originalRDNSet.get({}) --> {}", counter, originalRDNSet.get(counter));
+			rdnElementSet.put(counter, originalRDNSet.get(counter));
+		}
+		if (LOG.isTraceEnabled()) {
+			int newFDNSize = rdnElementSet.size();
+			LOG.trace(".FDN( FDN originalFDN ): rdnElementSet Size = {}", newFDNSize);
+			for (int newCounter = 0; newCounter < fdnSize; newCounter += 1) {
+				LOG.trace(".FDN( FDN originalFDN ): rdnElementSet.get({}) --> {}", newCounter,
+						rdnElementSet.get(newCounter));
+			}
+		}
+		generateString();
+	}
 
-    public FDN(FDN originalFDN) {
-        this.rdnElementSet = new JSONObject();
-        Iterator<String> nameTypeIterator = rdnElementSet.keys();
-        while (nameTypeIterator.hasNext()) {
-            String sequenceNumber = nameTypeIterator.next();
-            RDN rdnValue = (RDN) (rdnElementSet.get(sequenceNumber));
-            this.rdnElementSet.append(sequenceNumber, rdnValue);
-        }
-    }
+	public FDN(String stringFDN) {
+		LOG.trace(".FDN( String qualifiedFDN ): Constructor invoked, qualifiedFDN --> {}", stringFDN);
+		rdnElementSet = new HashMap<Integer, RDN>();
+		this.numberOfRDNs = 0;
+		populateFDN(stringFDN);
+		generateString();
+	}
 
-    public FDN(String qualifiedFDN) {
-        rdnElementSet = new JSONObject();
-        populateFDN(qualifiedFDN);
-    }
+	public void appendRDN(RDN pRDN) {
+		rdnElementSet.put(this.getNumberOfRDNs(), pRDN);
+		this.numberOfRDNs += 1;
+		generateString();
+	}
 
-    public void appendRDN(RDN pRDN) {
-        int setSize = rdnElementSet.length();
-        rdnElementSet.append(Integer.toString(setSize), pRDN);
-    }
+	public void populateFDN(String stringFDN) {
+		LOG.trace(".populateFDN(): Constructor invoked, stringFDN --> {}", stringFDN);
+		if (stringFDN == null) {
+			return;
+		}
+		if (stringFDN.isEmpty()) {
+			return;
+		}
+		
+	}
 
-    public void populateFDN(String qualifiedFDN) {
-        if (qualifiedFDN == null) {
-            return;
-        }
-        if (qualifiedFDN.isEmpty()) {
-            return;
-        }
-        String[] qualifiedElements = qualifiedFDN.split(FDN.RDN_STRING_ENTRY_SEPERATOR);
-        if (qualifiedElements.length < 1) {
-            return;
-        }
-        rdnElementSet = new JSONObject();
-        for (int counter = 0; counter < qualifiedElements.length; counter += 1) {
-            RDN newRDNElement = new RDN(qualifiedElements[counter]);
-            rdnElementSet.append(Integer.toString(counter), newRDNElement);
-        }
-    }
+	@Override
+	public String toString(){
+		return(this.fdnAsString);
+	}
 
-    public String toString() {
-        String fdnAsString = new String();
-        if (!rdnElementSet.isEmpty()) {
-            Iterator<String> rdnIterator = rdnElementSet.keys();
-            ArrayList<RDN> rdnArray = new ArrayList<RDN>();
-            while (rdnIterator.hasNext()) {
-                String rdnLocationAsString = rdnIterator.next();
-                int rdnLocation = Integer.valueOf(rdnLocationAsString);
-                rdnArray.add(rdnLocation, (RDN) (rdnElementSet.get(rdnLocationAsString)));
-            }
-            Iterator rdnOrderedListIterator = rdnArray.listIterator();
-            while (rdnOrderedListIterator.hasNext()) {
-                RDN rdnValue = (RDN) (rdnOrderedListIterator.next());
-                fdnAsString = fdnAsString.concat(rdnValue.toString());
-                if (rdnOrderedListIterator.hasNext()) {
-                    fdnAsString = fdnAsString.concat(RDN_STRING_ENTRY_SEPERATOR);
-                }
-            }
-        }
-        return (fdnAsString);
-    }
+	public void generateString() {
+		fdnAsString = new String();
+		if (!rdnElementSet.isEmpty()) {
+			fdnAsString = fdnAsString.concat(FDN_STRING_PREFIX);
+			int rdnCount = this.getNumberOfRDNs();
+			for (int counter = 0; counter < rdnCount; counter += 1) {
+				fdnAsString = fdnAsString.concat(this.rdnElementSet.get(counter).toString());
+				if (counter != (this.getNumberOfRDNs() - 1)) {
+					fdnAsString = fdnAsString.concat(RDN_STRING_ENTRY_SEPERATOR);
+				}
+			}
+			fdnAsString = fdnAsString.concat(FDN_STRING_SUFFIX);
+		}
+	}
 
-    public String toJSONString() {
-        return (rdnElementSet.toString());
-    }
+	public FDN getParentFDN() {
+		if (this.getNumberOfRDNs() <= 1) {
+			return null;
+		}
+		FDN parentFDN = new FDN();
+		for (int counter = 0; counter < (this.getNumberOfRDNs() - 1); counter += 1) {
+			parentFDN.appendRDN(this.rdnElementSet.get(counter));
+		}
+		return (parentFDN);
+	}
 
-    public FDN getParentFDN() {
-        if (!rdnElementSet.isEmpty()) {
-            Iterator<String> rdnIterator = rdnElementSet.keys();
-            ArrayList<RDN> rdnArray = new ArrayList<RDN>();
-            while (rdnIterator.hasNext()) {
-                String rdnLocationAsString = rdnIterator.next();
-                int rdnLocation = Integer.valueOf(rdnLocationAsString);
-                rdnArray.add(rdnLocation, (RDN) (rdnElementSet.get(rdnLocationAsString)));
-            }
-            FDN newFDN = new FDN();
-            int sizeOfExistingFDN = rdnArray.size();
-            if (sizeOfExistingFDN < 2) {
-                return (null);
-            }
-            for (int counter = 0; counter < (sizeOfExistingFDN - 1); counter += 1) {
-                newFDN.appendRDN((RDN) (rdnArray.get(counter)));
-            }
-            return (newFDN);
-        } else {
-            return (null);
-        }
-    }
+	public RDN getUnqualifiedRDN() {
+		if (rdnElementSet.isEmpty()) {
+			return (null);
+		}
+		if (this.numberOfRDNs < 1) {
+			return (null);
+		}
+		RDN theRDN = this.rdnElementSet.get((this.getNumberOfRDNs() - 1));
+		return (theRDN);
+	}
 
-    public RDN getRDNValue(String name) {
-        if (rdnElementSet.isEmpty()) {
-            return (null);
-        }
-        Iterator<String> rdnIterator = rdnElementSet.keys();
-        ArrayList<RDN> rdnArray = new ArrayList<RDN>();
-        while (rdnIterator.hasNext()) {
-            String rdnLocationAsString = rdnIterator.next();
-            int rdnLocation = Integer.valueOf(rdnLocationAsString);
-            rdnArray.add(rdnLocation, (RDN) (rdnElementSet.get(rdnLocationAsString)));
-        }
-        rdnArray.trimToSize();
-        int numberOfRDNs = rdnArray.size();
-        return((RDN)(rdnArray.get(numberOfRDNs-1)));
-    }
-    
-    public boolean isEmpty(){
-        return(this.rdnElementSet.isEmpty());
-    }
+	public boolean isEmpty() {
+		return (this.rdnElementSet.isEmpty());
+	}
+
+	public Map<Integer, RDN> getRDNSet() {
+		return (this.rdnElementSet);
+	}
+
+	public Integer getNumberOfRDNs() {
+		return (this.numberOfRDNs);
+	}
+
+	public boolean equals(FDN otherFDN) {
+		if (otherFDN == null) {
+			return (false);
+		}
+		if (getNumberOfRDNs() != otherFDN.getNumberOfRDNs()) {
+			return (false);
+		}
+		String thisFDNAsString = toString();
+		String otherFDNAsString = otherFDN.toString();
+		if (thisFDNAsString.contentEquals(otherFDNAsString)) {
+			return (true);
+		} else {
+			return (false);
+		}
+	}
 }

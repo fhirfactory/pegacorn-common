@@ -21,107 +21,98 @@
  */
 package net.fhirfactory.pegacorn.common.model;
 
-import java.util.Iterator;
-import java.util.Set;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
  *
- * @author markh
+ * @author Mark A. Hunter
  */
 public class RDN {
 
-    private JSONObject value;
-    public static String RDN_SEPARATOR = "|=|";
+	private JSONObject rdnValue;
 
-    public String BAD_NAME_VALUE = "ERROR_BAD_NAME_VALUE";
-    public String BAD_NAME_TYPE = "ERROR_BAD_NAME_TYPE";
+	public static String RDN_SEPARATOR = "=";
+	
+	public static final String rdnQualifierType = "type";
+	public static final String rdnQualifierValue = "value";
 
-    public RDN(String nameType, String nameValue) {
-        value = new JSONObject();
-        if (nameType == null) {
-            nameType = BAD_NAME_TYPE;
-        }
-        if (nameType.isEmpty()) {
-            nameType = BAD_NAME_TYPE;
-        }
-        if (nameValue == null) {
-            nameValue = BAD_NAME_VALUE;
-        }
-        if (nameValue.isEmpty()) {
-            nameValue = BAD_NAME_VALUE;
-        }
-        value.append(nameType, nameValue);
-    }
+	public String BAD_NAME_VALUE = "ERROR_BAD_NAME_VALUE";
+	public String BAD_NAME_TYPE = "ERROR_BAD_NAME_TYPE";
 
-    public RDN(String qualifiedRDNName) { // String of type "type=value"
-        value = new JSONObject();
-        if (qualifiedRDNName == null) {
-            value.append(this.BAD_NAME_TYPE, this.BAD_NAME_VALUE);
-            return;
-        }
-        if (qualifiedRDNName.isEmpty()) {
-            value.append(this.BAD_NAME_TYPE, this.BAD_NAME_VALUE);
-            return;
-        }
-        JSONObject tempRDN;
-        try {
-            tempRDN = new JSONObject(qualifiedRDNName);
-        } catch (JSONException Ex) {
-            value.append(this.BAD_NAME_TYPE, this.BAD_NAME_VALUE);
-            return;
-        }
-        if (tempRDN.length() != 1) {
-            value.append(this.BAD_NAME_TYPE, this.BAD_NAME_VALUE);
-            return;
-        }
-        Iterator<String> nameTypeIterator = tempRDN.keys();
-        // we are only interested in the first :)
-        String nameTypeOfInterest = nameTypeIterator.next();
-        value.append(nameTypeOfInterest, tempRDN.get(nameTypeOfInterest));
-    }
+	public String rdnAsQualifiedString;
+	public String rdnToString;
 
-    public String getNameType() {
-        Iterator<String> nameTypeIterator = value.keys();
-        // we are only interested in the first :)
-        String nameTypeOfInterest = nameTypeIterator.next();
-        return nameTypeOfInterest;
-    }
+	public RDN(String nameType, String nameValue) {
+		if (nameType == null) {
+			nameType = BAD_NAME_TYPE;
+		}
+		if (nameType.isEmpty()) {
+			nameType = BAD_NAME_TYPE;
+		}
+		if (nameValue == null) {
+			nameValue = BAD_NAME_VALUE;
+		}
+		if (nameValue.isEmpty()) {
+			nameValue = BAD_NAME_VALUE;
+		}
+		this.rdnValue.put(rdnQualifierValue, nameValue);
+		this.rdnValue.put(rdnQualifierType, nameType);
+		convertToString();
+		toJSONString();
+	}
 
-    public void setNameType(String newNameType) {
-        Iterator<String> nameTypeIterator = value.keys();
-        // we are only interested in the first :)
-        String oldNameType = nameTypeIterator.next();
-        String oldNameValue = value.getString(oldNameType);
-        value.remove(oldNameType);
-        value.append(newNameType, oldNameValue);
-    }
+	public RDN(RDN otherRDN) {
+		rdnValue = new JSONObject();
+		if (otherRDN != null) {
+			rdnValue.put(rdnQualifierType, otherRDN.rdnValue.getString(rdnQualifierType));
+			rdnValue.put(rdnQualifierValue, otherRDN.rdnValue.getString(rdnQualifierValue));
+			convertToString();
+			toJSONString();
+		}
+	}
+	
+	public RDN(String qualifiedString) {
+		if(qualifiedString != null) {
+			try {
+				this.rdnValue = new JSONObject(qualifiedString);
+			} catch(Exception jsonEx) {
+				// do nothing.
+			}
+		}
+	}
 
-    public String getNameValue() {
-        Iterator<String> nameTypeIterator = value.keys();
-        // we are only interested in the first :)
-        String nameTypeOfInterest = nameTypeIterator.next();
-        return (value.getString(nameTypeOfInterest));
-    }
+	public String getNameType() {
+		return (this.rdnValue.getString(rdnQualifierType));
+	}
 
-    public void setNameValue(String newNameValue) {
-        Iterator<String> nameTypeIterator = value.keys();
-        // we are only interested in the first :)
-        String oldNameType = nameTypeIterator.next();
-        value.remove(oldNameType);
-        value.append(oldNameType, newNameValue);
-    }
+	public void setNameType(String newNameType) {
+		this.rdnValue.put(rdnQualifierType, newNameType);
+		toJSONString();
+	}
 
-    public String toString() {
-        Iterator<String> nameTypeIterator = value.keys();
-        // we are only interested in the first :)
-        String nameType = nameTypeIterator.next();
-        String nameValue = value.getString(nameType);
-        return (nameType + RDN_SEPARATOR + nameValue);
-    }
+	public String getNameValue() {
+		return(this.rdnValue.getString(rdnQualifierValue));
+	}
 
-    public String toJSONString() {
-        return (value.toString());
-    }
+	public void setNameValue(String newNameValue) {
+		this.rdnValue.put(rdnQualifierValue, newNameValue);
+		toJSONString();
+	}
+
+	@Override
+	public String toString() {
+		return (this.rdnToString);
+	}
+	
+	public void convertToString() {
+		this.rdnToString = "(" + this.rdnValue.getString(rdnQualifierType) + RDN_SEPARATOR + this.rdnValue.getString(rdnQualifierValue) + ")";
+	}
+
+	public void toJSONString() {
+		this.rdnAsQualifiedString = rdnValue.toString();
+	}
+	
+	public String asQaulifiedString() {
+		return(this.rdnAsQualifiedString);
+	}
 }
