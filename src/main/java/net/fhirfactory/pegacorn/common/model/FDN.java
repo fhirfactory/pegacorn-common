@@ -42,6 +42,7 @@ public class FDN {
 	private Integer rdnCount;
 	private FDNToken token;
 	private String fdnToString;
+	private String unqualifiedToken;
 
 	private static final String RDN_TO_STRING_ENTRY_SEPERATOR = ".";
 	private static final String FDN_TO_STRING_PREFIX = "[FDN:";
@@ -60,6 +61,7 @@ public class FDN {
 		LOG.trace(".FDN(): this.rdnElementSet intialised.");
 		this.token = new FDNToken();
 		this.fdnToString = new String();
+		this.unqualifiedToken = new String();
 	}
 
 	/**
@@ -89,6 +91,7 @@ public class FDN {
 		// every time we do some comparison etc.
 		generateToString();
 		generateToken();
+		generateUnqualifiedToken();
 		LOG.trace(".FDN( FDN originalFDN ): generatedFDN = {}", this.fdnToString);
 	}
 	
@@ -141,6 +144,7 @@ public class FDN {
 		// every time we do some comparison etc.
 		generateToString();
 		generateToken();
+		generateUnqualifiedToken();
 	}
 
 	/**
@@ -163,6 +167,7 @@ public class FDN {
 		// every time we do some comparison etc.
 		generateToString();
 		generateToken();
+		generateUnqualifiedToken();
 	}
 
 	@Override
@@ -265,5 +270,18 @@ public class FDN {
 		}
 		String tokenString = FDN_TOKEN_PREFIX + newToken.toString() + FDN_TOKEN_SUFFIX;
 		this.token = new FDNToken(tokenString);
+	}
+
+	private void generateUnqualifiedToken(){
+		String newUnqualifiedToken = new String();
+		for(int counter = 0; counter < this.getRDNCount(); counter++) {
+			RDN currentRDN = this.rdnSet.get(counter);
+			newUnqualifiedToken = newUnqualifiedToken + "<" + currentRDN.getUnqualifiedName() + ">";
+		}
+		this.unqualifiedToken = newUnqualifiedToken;
+	}
+
+	public String getUnqualifiedToken() {
+		return unqualifiedToken;
 	}
 }

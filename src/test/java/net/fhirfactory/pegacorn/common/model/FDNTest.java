@@ -112,15 +112,15 @@ class FDNTest {
 			fail("basicConstructureSetTest: Failed Copy Constructor Test - wrong number of RDNs, should be 4, but there is --> " + copiedFDN.getRDNCount());
 		}
 		RDN unqualifiedRDN = copiedFDN.getUnqualifiedRDN();
-		if(!unqualifiedRDN.getNameType().contentEquals("TestType3") || !unqualifiedRDN.getNameValue().contentEquals("TestValue3")) {
+		if(!unqualifiedRDN.getNameQualifier().contentEquals("TestType3") || !unqualifiedRDN.getNameValue().contentEquals("TestValue3")) {
 			fail("basicConstructureSetTest: Failed Copy Constructor Test - wrong content in RDN");
 		}
 		// FDNToken Constructor
 		LOG.trace("basicConstructureSetTest(): FDNToken Constructor Test");
-		String fdnTokenString0 = "{FDNToken:{\"0\":\"{\\\"Type\\\":\\\"TestType0\\\",\\\"Value\\\":\\\"TestValue0\\\"}\"}}";
-		String fdnTokenString1 = "{FDNToken:{\"0\":\"{\\\"Type\\\":\\\"TestType0\\\",\\\"Value\\\":\\\"TestValue0\\\"}\","
-				+ "\"1\":\"{\\\"Type\\\":\\\"TestType1\\\",\\\"Value\\\":\\\"TestValue1\\\"}\","
-				+ "\"2\":\"{\\\"Type\\\":\\\"TestType2\\\",\\\"Value\\\":\\\"TestValue2\\\"}\"}}";
+		String fdnTokenString0 = "{FDNToken:{\"0\":\"{\\\"Qualifier\\\":\\\"TestType0\\\",\\\"Value\\\":\\\"TestValue0\\\"}\"}}";
+		String fdnTokenString1 = "{FDNToken:{\"0\":\"{\\\"Qualifier\\\":\\\"TestType0\\\",\\\"Value\\\":\\\"TestValue0\\\"}\","
+				+ "\"1\":\"{\\\"Qualifier\\\":\\\"TestType1\\\",\\\"Value\\\":\\\"TestValue1\\\"}\","
+				+ "\"2\":\"{\\\"Qualifier\\\":\\\"TestType2\\\",\\\"Value\\\":\\\"TestValue2\\\"}\"}}";
 		FDNToken fdnToken0 = new FDNToken(fdnTokenString0);
 		FDNToken fdnToken1 = new FDNToken(fdnTokenString1);
 		LOG.trace(".basicConstructureSetTest(): fdnToken1 --> {}", fdnToken1);
@@ -130,7 +130,7 @@ class FDNTest {
 		}
 		RDN testRDN = testFDN.getUnqualifiedRDN();
 		LOG.trace(".basicConstructureSetTest(): testRDN --> {}", testRDN);
-		if (!((testRDN.getNameType().contentEquals("TestType2"))
+		if (!((testRDN.getNameQualifier().contentEquals("TestType2"))
 				&& (testRDN.getNameValue().contentEquals("TestValue2")))) {
 			fail("basicConstructureSetTest: Wrong RDN was returned!");
 		}
@@ -143,17 +143,16 @@ class FDNTest {
 	@Test
 	void testAppendRDN() {
 		LOG.debug(".testAppendRDN(): Entry...");
-		FDN referenceFDN = new FDN(new FDNToken(
-				"{FDNToken:{\"0\":\"{\\\"Type\\\":\\\"Level0\\\",\\\"Value\\\":\\\"TestValue0\\\"}\"}}"));
+		FDN referenceFDN = new FDN(new FDNToken("{FDNToken:{\"0\":\"{\\\"Qualifier\\\":\\\"Level0\\\",\\\"Value\\\":\\\"TestValue0\\\"}\"}}"));
 		RDN testRDN = referenceFDN.getUnqualifiedRDN();
-		if (!(testRDN.getNameType().contentEquals("Level0"))
+		if (!(testRDN.getNameQualifier().contentEquals("Level0"))
 				|| !(testRDN.getNameValue().contentEquals("TestValue0"))) {
 			fail("Simple re-test of the getNameType()/getNameValue() failed");
 		}
 		RDN toBeAppendedRDN = new RDN("Level1", "TestValue1");
 		referenceFDN.appendRDN(toBeAppendedRDN);
 		RDN testRDN2 = referenceFDN.getUnqualifiedRDN();
-		if (!(testRDN2.getNameType().contentEquals("Level1"))
+		if (!(testRDN2.getNameQualifier().contentEquals("Level1"))
 				|| !(testRDN2.getNameValue().contentEquals("TestValue1"))) {
 			fail("Comparison failed of the expected appended RDN");
 		}		
@@ -168,21 +167,21 @@ class FDNTest {
 	void testGetParentFDN() {
 		LOG.debug(".testGetParentFDN(): Entry...");
 		FDN referenceFDN = new FDN(new FDNToken(
-				"{FDNToken:{\"0\":\"{\\\"Type\\\":\\\"Level0\\\",\\\"Value\\\":\\\"TestValue0\\\"}\"}}"));
+				"{FDNToken:{\"0\":\"{\\\"Qualifier\\\":\\\"Level0\\\",\\\"Value\\\":\\\"TestValue0\\\"}\"}}"));
 		RDN testRDN = referenceFDN.getUnqualifiedRDN();
-		if (!(testRDN.getNameType().contentEquals("Level0"))
+		if (!(testRDN.getNameQualifier().contentEquals("Level0"))
 				|| !(testRDN.getNameValue().contentEquals("TestValue0"))) {
 			fail("Simple re-test of the getNameType()/getNameValue() failed");
 		}
 		RDN toBeAppendedRDN = new RDN("Level1", "TestValue1");
 		referenceFDN.appendRDN(toBeAppendedRDN);
 		RDN testRDN2 = referenceFDN.getUnqualifiedRDN();
-		if (!(testRDN2.getNameType().contentEquals("Level1"))
+		if (!(testRDN2.getNameQualifier().contentEquals("Level1"))
 				|| !(testRDN2.getNameValue().contentEquals("TestValue1"))) {
 			fail("Comparison failed of the expected appended RDN");
 		}		
 		FDN testFDN2 = referenceFDN.getParentFDN();
-		if (!(testRDN.getNameType().contentEquals("Level0"))
+		if (!(testRDN.getNameQualifier().contentEquals("Level0"))
 				|| !(testRDN.getNameValue().contentEquals("TestValue0"))) {
 			fail("Failed to handle removing FDN (i.e. getting Parent FDN)");
 		}

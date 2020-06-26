@@ -43,7 +43,7 @@ public class RDNToken {
 	
 	@Override
 	public String toString() {
-		return("[RDNToken:" + content + "]");
+		return("RDNToken{" + content + "}");
 	}
 	
 }
