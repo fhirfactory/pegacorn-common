@@ -19,34 +19,52 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 package net.fhirfactory.pegacorn.common.model;
 
 public class FDNToken {
-	private String content;
-	
-	public FDNToken() {
-		content = new String();
-	}
-	
-	public FDNToken(String tokenContent) {
-		this.content = new String(tokenContent);
-	}
-	
-	public FDNToken(FDNToken originalToken) {
-		this.content = new String(originalToken.getContent());
-	}
-	
-	public String getContent() {
-		return(this.content);
-	}
-	
-	public void setContent(String tokenContent) {
-		this.content = new String(tokenContent);
-	}
-	
-	@Override
-	public String toString() {
-		return(content);
-	}
+
+    private String content;
+
+    public FDNToken() {
+        content = new String();
+    }
+
+    public FDNToken(String tokenContent) {
+        this.content = new String(tokenContent);
+    }
+
+    public FDNToken(FDNToken originalToken) {
+        this.content = new String(originalToken.getContent());
+    }
+
+    public String getContent() {
+        return (this.content);
+    }
+
+    public void setContent(String tokenContent) {
+        this.content = new String(tokenContent);
+    }
+
+    @Override
+    public String toString() {
+        return (content);
+    }
+
+    public boolean equals(FDNToken otherToken) {
+        if(otherToken==null){
+            return(false);
+        }
+        if (content == null) {
+            if (otherToken.getContent() == null) {
+                return (true);
+            } else {
+                return (false);
+            }
+        }
+        if(otherToken.getContent()==null){
+            return(false);
+        }
+        boolean contentIsEqual = content.contentEquals(otherToken.getContent());
+        return(contentIsEqual);
+    }
 }

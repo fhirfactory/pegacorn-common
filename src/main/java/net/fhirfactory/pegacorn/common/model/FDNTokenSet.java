@@ -29,14 +29,17 @@ import java.util.Set;
 public class FDNTokenSet {
 	private LinkedHashSet<FDNToken> elements;
 	private String fdnSetAsString;
+	private Object updateLock;
 
 	public FDNTokenSet() {
 		elements = new LinkedHashSet<>();
 		fdnSetAsString = new String();
+		updateLock = new Object();
 	}
 
 	public FDNTokenSet(FDNTokenSet originalSet) {
 		elements = new LinkedHashSet<>();
+		updateLock = new Object();
 		if (originalSet != null) {
 			Iterator<FDNToken> originalSetIterator = originalSet.getElements().iterator();
 			while (originalSetIterator.hasNext()) {
@@ -52,44 +55,50 @@ public class FDNTokenSet {
 	}
 
 	public void setElements(Set<FDNToken> newElementSet) {
-		elements.clear();
 		if (newElementSet == null) {
 			return;
 		}
-		Iterator<FDNToken> fdnIterator = newElementSet.iterator();
-		while (fdnIterator.hasNext()) {
-			FDNToken fdnCopy = new FDNToken(fdnIterator.next());
-			elements.add(fdnCopy);
-		}
-		generateString();
-	}
-
-	public void addElement(FDNToken newFDNToken) {
-		Iterator<FDNToken> setIterator = elements.iterator();
-		boolean isAlreadyPresent = false;
-		while (setIterator.hasNext()) {
-			FDNToken currentFDN = setIterator.next();
-			if (currentFDN.equals(newFDNToken)) {
-				isAlreadyPresent = true;
-				break;
+		synchronized (updateLock) {
+			elements.clear();
+			Iterator<FDNToken> fdnIterator = newElementSet.iterator();
+			while (fdnIterator.hasNext()) {
+				FDNToken fdnCopy = new FDNToken(fdnIterator.next());
+				elements.add(fdnCopy);
 			}
-		}
-		if (!isAlreadyPresent) {
-			FDNToken toBeAddedFDN = new FDNToken(newFDNToken);
-			elements.add(toBeAddedFDN);
 			generateString();
 		}
 	}
 
-	public void removeElement(FDNToken theFDNToken) {
-		Iterator<FDNToken> setIterator = elements.iterator();
-		boolean isAlreadyPresent = false;
-		while (setIterator.hasNext()) {
-			FDNToken currentFDN = setIterator.next();
-			if (currentFDN.equals(theFDNToken)) {
-				elements.remove(currentFDN);
+	public void addElement(FDNToken newFDNToken) {
+		synchronized (updateLock) {
+			Iterator<FDNToken> setIterator = elements.iterator();
+			boolean isAlreadyPresent = false;
+			while (setIterator.hasNext()) {
+				FDNToken currentFDN = setIterator.next();
+				if (currentFDN.equals(newFDNToken)) {
+					isAlreadyPresent = true;
+					break;
+				}
+			}
+			if (!isAlreadyPresent) {
+				FDNToken toBeAddedFDN = new FDNToken(newFDNToken);
+				elements.add(toBeAddedFDN);
 				generateString();
-				break;
+			}
+		}
+	}
+
+	public void removeElement(FDNToken theFDNToken) {
+		synchronized (updateLock) {
+			Iterator<FDNToken> setIterator = elements.iterator();
+			boolean isAlreadyPresent = false;
+			while (setIterator.hasNext()) {
+				FDNToken currentFDN = setIterator.next();
+				if (currentFDN.equals(theFDNToken)) {
+					elements.remove(currentFDN);
+					generateString();
+					break;
+				}
 			}
 		}
 	}

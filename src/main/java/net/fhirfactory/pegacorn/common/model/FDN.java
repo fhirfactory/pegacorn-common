@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class FDN {
 	private static final Logger LOG = LoggerFactory.getLogger(FDN.class);
 	private HashMap<Integer, RDN> rdnSet;
+	private String FDNType;
 	private Integer rdnCount;
 	private FDNToken token;
 	private String fdnToString;
@@ -283,5 +284,27 @@ public class FDN {
 
 	public String getUnqualifiedToken() {
 		return unqualifiedToken;
+	}
+
+	public String getFDNType() {
+		return FDNType;
+	}
+
+	public void setFDNType(String FDNType) {
+		this.FDNType = FDNType;
+	}
+
+	public void appendFDN(FDN additionalFDN){
+		if( additionalFDN==null){
+			return;
+		}
+		int additionalFDNSize = additionalFDN.getRDNCount();
+		Map<Integer, RDN> additionalRDNSet = additionalFDN.getRDNSet();
+		for(int counter = 0; counter < additionalFDNSize; counter++ ) {
+			this.appendRDN(additionalRDNSet.get(counter));
+		}
+		generateToString();
+		generateToken();
+		generateUnqualifiedToken();
 	}
 }
