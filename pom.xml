@@ -25,7 +25,7 @@
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.6.0</version>
+                <version>${version-org.junit}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -62,7 +62,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>${commons-lang3-version}</version>
+            <version>${version-org.apache.commons-lang3}</version>
         </dependency>
 
         <!-- JSON Encoding/Decoding Libraries -->
@@ -76,7 +76,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.10.1</version>
+            <version>${version-com.fasterxml.jackson.core-jackson-databind}</version>
             <type>jar</type>
         </dependency>
 
@@ -89,7 +89,7 @@
         <dependency>
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
-            <version>${javax.enterprise.cdi-api.version}</version>
+            <version>${version-javax.enterprise-cdi-api}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -106,7 +106,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${version-org.apache.maven.compiler.plugin}</version>
+                <version>${version-org.apache.maven-compiler-plugin}</version>
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
@@ -115,11 +115,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M4</version>
+                <version>${version-org.apache.maven-surefire-plugin}</version>
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>${version-org.apache.maven-failsafe-plugin}</version>
             </plugin>
         </plugins>
     </build>
