@@ -345,4 +345,16 @@ public class FDN {
         generateUnqualifiedToken();
         LOG.trace(".appendFDN: Exit");
     }
+    
+    public RDN extractRDNViaQualifier(String qualifier){
+        LOG.trace(".extractRDNViaQualifier(): Entry, qualifier --> {}",qualifier );
+        for (int counter = 0; counter < this.getRDNCount(); counter++) {
+            RDN currentRDN = this.rdnSet.get(counter);
+            boolean matches = currentRDN.getNameQualifier().contentEquals(qualifier);
+            if(matches){
+                return(currentRDN);
+            }
+        }
+        return(null);
+    }
 }
