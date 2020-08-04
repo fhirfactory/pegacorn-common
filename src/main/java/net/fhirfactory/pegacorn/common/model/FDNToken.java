@@ -21,6 +21,8 @@
  */
 package net.fhirfactory.pegacorn.common.model;
 
+import java.util.Map;
+
 public class FDNToken {
 
     private String content;
@@ -47,7 +49,7 @@ public class FDNToken {
 
     @Override
     public String toString() {
-        return (content);
+        return (makeSimpleString());
     }
 
     public boolean equals(FDNToken otherToken) {
@@ -66,5 +68,30 @@ public class FDNToken {
         }
         boolean contentIsEqual = content.contentEquals(otherToken.getContent());
         return(contentIsEqual);
+    }
+
+    private String makeSimpleString(){
+        FDN tempFDN = new FDN(this);
+        String simpleString = "SimpleFDN=";
+        Map<Integer, RDN> rdnSet = tempFDN.getRDNSet();
+        int setSize = rdnSet.size();
+        for (int counter = 0; counter < setSize; counter++) {
+            RDN currentRDN = rdnSet.get(counter);
+            String currentNameValue = currentRDN.getNameValue();
+            if(currentNameValue.contains(".")){
+                String outputString = currentNameValue.replace(".", "_");
+                simpleString = simpleString + outputString;
+            } else {
+                simpleString = simpleString + currentNameValue;
+            }
+            if(counter < (setSize - 1)){
+                simpleString = simpleString + ".";
+            }
+        }
+        return(simpleString);
+    }
+
+    public String toFullString(){
+        return(this.content);
     }
 }
