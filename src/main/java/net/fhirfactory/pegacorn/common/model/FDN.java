@@ -23,6 +23,7 @@ package net.fhirfactory.pegacorn.common.model;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -258,27 +259,6 @@ public class FDN {
         return (this.rdnCount);
     }
 
-    public boolean equals(FDN otherFDN) {
-        LOG.trace(".equals(): Entry, otherFDN --> {}", otherFDN);
-        if (otherFDN == null) {
-            LOG.trace(".equals(): Exit, otherFDN is null, therefore not equal, returning --> false");
-            return (false);
-        }
-        if (getRDNCount() != otherFDN.getRDNCount()) {
-            LOG.trace(".equals(): Exit, otherFDN has different RDN count, therefore not equal, returning --> false");
-            return (false);
-        }
-        String thisFDNToken = getToken().getContent();
-        String otherFDNToken = otherFDN.getToken().getContent();
-        if (thisFDNToken.contentEquals(otherFDNToken)) {
-            LOG.trace(".equals(): Exit, actuall content of the otherFDN matches this one, returning --> true");
-            return (true);
-        } else {
-            LOG.trace(".equals(): Exit, actuall content of the otherFDN does not match this one, returning --> false");
-            return (false);
-        }
-    }
-
     public FDNToken getToken() {
         LOG.trace(".getToken(): Entry/Exit");
         return (this.token);
@@ -356,5 +336,21 @@ public class FDN {
             }
         }
         return(null);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FDN fdn = (FDN) o;
+        String thisFDNToken = this.getToken().toFullString();
+        String otherFDNToken = fdn.getToken().toFullString();
+        boolean equalityTest = thisFDNToken.contentEquals(otherFDNToken);
+        return (equalityTest);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(rdnSet, rdnCount);
     }
 }

@@ -22,6 +22,7 @@
 package net.fhirfactory.pegacorn.common.model;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class FDNToken {
 
@@ -52,24 +53,6 @@ public class FDNToken {
         return (makeSimpleString());
     }
 
-    public boolean equals(FDNToken otherToken) {
-        if(otherToken==null){
-            return(false);
-        }
-        if (content == null) {
-            if (otherToken.getContent() == null) {
-                return (true);
-            } else {
-                return (false);
-            }
-        }
-        if(otherToken.getContent()==null){
-            return(false);
-        }
-        boolean contentIsEqual = content.contentEquals(otherToken.getContent());
-        return(contentIsEqual);
-    }
-
     private String makeSimpleString(){
         FDN tempFDN = new FDN(this);
         String simpleString = "SimpleFDN=";
@@ -93,5 +76,19 @@ public class FDNToken {
 
     public String toFullString(){
         return(this.content);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FDNToken fdnToken = (FDNToken) o;
+        boolean equalityTest = fdnToken.getContent().contentEquals(this.getContent());
+        return (equalityTest);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getContent());
     }
 }
