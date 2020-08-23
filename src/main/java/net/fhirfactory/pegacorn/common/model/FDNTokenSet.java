@@ -91,7 +91,6 @@ public class FDNTokenSet {
 	public void removeElement(FDNToken theFDNToken) {
 		synchronized (updateLock) {
 			Iterator<FDNToken> setIterator = elements.iterator();
-			boolean isAlreadyPresent = false;
 			while (setIterator.hasNext()) {
 				FDNToken currentFDN = setIterator.next();
 				if (currentFDN.equals(theFDNToken)) {

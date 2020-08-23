@@ -29,8 +29,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  *
  * @author Mark A. Hunter (ACT Health)
@@ -292,6 +290,21 @@ public class FDN {
         }
         this.unqualifiedToken = newUnqualifiedToken;
         LOG.trace(".generateUnqualifiedToken(): Exit");
+    }
+    
+    public String getID() {
+        LOG.trace(".getID(): Entry");
+        String id = new String();
+        int depthCount = this.getRDNCount();
+        for (int counter = 0; counter < depthCount; counter++) {
+            RDN currentRDN = this.rdnSet.get(counter);
+            id = id + currentRDN.getNameQualifier() + "=" + currentRDN.getNameValue();
+            if(counter < (depthCount - 1)) {
+            	id = id + ".";
+            }
+        }
+        LOG.trace(".generateUnqualifiedToken(): Exit, Id --> {}", id);
+        return(id);
     }
 
     public String getUnqualifiedToken() {
