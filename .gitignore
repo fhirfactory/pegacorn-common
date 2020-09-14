@@ -26,3 +26,11 @@ pegacorn-platform-commoncode.iml
 .settings/org.eclipse.wst.common.project.facet.core.xml
 pegacorn-common.iml
 pegacorn-platform-commoncode.iml
+.classpath
+.project
+.settings/org.eclipse.core.resources.prefs
+.settings/org.eclipse.jdt.core.prefs
+.settings/org.eclipse.wst.common.component
+.settings/org.eclipse.wst.common.project.facet.core.xml
+pegacorn-common.iml
+pegacorn-platform-commoncode.iml

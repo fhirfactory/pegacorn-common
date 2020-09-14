@@ -21,8 +21,7 @@
  */
 package net.fhirfactory.pegacorn.common.model;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.Objects;
 
 import org.json.JSONObject;
@@ -42,7 +41,7 @@ import org.slf4j.LoggerFactory;
 public class FDN {
 
     private static final Logger LOG = LoggerFactory.getLogger(FDN.class);
-    private HashMap<Integer, RDN> rdnSet;
+    private ArrayList<RDN> rdnSet;
     private String FDNType;
     private Integer rdnCount;
     private FDNToken token;
@@ -50,8 +49,8 @@ public class FDN {
     private String unqualifiedToken;
 
     private static final String RDN_TO_STRING_ENTRY_SEPERATOR = ".";
-    private static final String FDN_TO_STRING_PREFIX = "[FDN:";
-    private static final String FDN_TO_STRING_SUFFIX = "]";
+    private static final String FDN_TO_STRING_PREFIX = "{FDN:";
+    private static final String FDN_TO_STRING_SUFFIX = "}";
 
     private static final String FDN_TOKEN_ID = "FDNToken";
 
@@ -60,7 +59,7 @@ public class FDN {
      */
     public FDN() {
         LOG.trace(".FDN(): Default constructor invoked.");
-        this.rdnSet = new HashMap<Integer, RDN>();
+        this.rdnSet = new ArrayList<RDN>();
         this.rdnCount = 0;
         LOG.trace(".FDN(): this.rdnElementSet intialised.");
         this.token = new FDNToken();
@@ -82,14 +81,14 @@ public class FDN {
         // Essentially, we iterate through the HashMap from the OriginalFDN, 
         // create new RDN's from the content, and append these RDN's (in the 
         // appropriate order) into the new FDN.
-        this.rdnSet = new HashMap<Integer, RDN>();
+        this.rdnSet = new ArrayList<RDN>();
         this.rdnCount = originalFDN.getRDNCount();
-        Map<Integer, RDN> otherRDNSet = originalFDN.getRDNSet();
-        if (otherRDNSet.keySet().size() != originalFDN.getRDNCount()) {
+        ArrayList<RDN> otherRDNSet = originalFDN.getRDNSet();
+        if (otherRDNSet.size() != originalFDN.getRDNCount()) {
             throw (new IllegalArgumentException("Malformed FDN passed to copy Constructor"));
         }
         for (int counter = 0; counter < this.getRDNCount(); counter++) {
-            this.rdnSet.put(counter, otherRDNSet.get(counter));
+            this.rdnSet.add(counter, otherRDNSet.get(counter));
         }
         // We need to pre-build the toString() and getToken() content so we don't re-do it 
         // every time we do some comparison etc.
@@ -123,7 +122,7 @@ public class FDN {
             JSONObject tokenAsRDNSet = tokenAsJSON.getJSONObject(FDN_TOKEN_ID);
             int setSize = tokenAsRDNSet.length();
             LOG.trace(".FDN(FDNToken token): The number of RDN entries in the Token is --> {}", setSize);
-            this.rdnSet = new HashMap<Integer, RDN>();
+            this.rdnSet = new ArrayList<RDN>();
             // We are going to take the content from the FDNToken, convert it to a JSONObject, and then
             // iterate through the elements (the JSONObject will have values <counter, string> in it.
             // We then take the string from the JSONObject, which is, in fact, an RDNToken and then
@@ -135,7 +134,7 @@ public class FDN {
                 RDNToken currentRDNToken = new RDNToken(currentRDNTokenContent);
                 RDN currentRDN = new RDN(currentRDNToken);
                 LOG.trace(".FDN( FDNToken token ): Iterating through the extracted RDNs, current RDN --> {}", currentRDN);
-                this.rdnSet.put(counter, currentRDN);
+                this.rdnSet.add(counter, currentRDN);
             }
             this.rdnCount = setSize;
         } catch (Exception jsonEx) {
@@ -163,7 +162,7 @@ public class FDN {
         }
         RDN newRDN = new RDN(toBeAddedRDN);
         int existingSetSize = this.getRDNCount();
-        this.rdnSet.put(existingSetSize, newRDN);
+        this.rdnSet.add(existingSetSize, newRDN);
         this.rdnCount = existingSetSize + 1;
         // We need to pre-build the toString() and getToken() content so we don't re-do it 
         // every time we do some comparison etc.
@@ -186,17 +185,10 @@ public class FDN {
      */
     private void generateToString() {
         LOG.trace(".generateToString(): Entry");
-        fdnToString = new String();
-        fdnToString = fdnToString.concat(FDN_TO_STRING_PREFIX);
-        for (int counter = 0; counter < this.getRDNCount(); counter++) {
-            RDN currentRDN = this.rdnSet.get(counter);
-            String currentRDNString = currentRDN.getConciseString();
-            fdnToString = fdnToString.concat(currentRDNString);
-            if (counter != (this.getRDNCount() - 1)) {
-                fdnToString = fdnToString.concat(RDN_TO_STRING_ENTRY_SEPERATOR);
-            }
-        }
-        fdnToString = fdnToString.concat(FDN_TO_STRING_SUFFIX);
+        String toString = FDN_TO_STRING_PREFIX;
+        toString = toString + rdnSet.toString();
+        toString = toString + FDN_TO_STRING_SUFFIX;
+        this.fdnToString = toString;
         LOG.trace(".generateToString(): Exit");
     }
 
@@ -247,7 +239,7 @@ public class FDN {
         }
     }
 
-    public Map<Integer, RDN> getRDNSet() {
+    public ArrayList<RDN> getRDNSet() {
         LOG.trace(".getRDNSet(): Entry/Exit");
         return (this.rdnSet);
     }
@@ -282,7 +274,7 @@ public class FDN {
         int depthCount = 0;
         for (int counter = 0; counter < this.getRDNCount(); counter++) {
             RDN currentRDN = this.rdnSet.get(counter);
-            newUnqualifiedToken = newUnqualifiedToken + "{" + currentRDN.getUnqualifiedName();
+            newUnqualifiedToken = newUnqualifiedToken + "{" + currentRDN.getValue();
             depthCount++;
         }
         for (int depthCounter = 0; depthCounter < depthCount; depthCounter++) {
@@ -298,7 +290,7 @@ public class FDN {
         int depthCount = this.getRDNCount();
         for (int counter = 0; counter < depthCount; counter++) {
             RDN currentRDN = this.rdnSet.get(counter);
-            id = id + currentRDN.getNameQualifier() + "=" + currentRDN.getNameValue();
+            id = id + currentRDN.getQualifier() + "=" + currentRDN.getValue();
             if(counter < (depthCount - 1)) {
             	id = id + ".";
             }
@@ -329,7 +321,7 @@ public class FDN {
             return;
         }
         int additionalFDNSize = additionalFDN.getRDNCount();
-        Map<Integer, RDN> additionalRDNSet = additionalFDN.getRDNSet();
+        ArrayList<RDN> additionalRDNSet = additionalFDN.getRDNSet();
         for (int counter = 0; counter < additionalFDNSize; counter++) {
             this.appendRDN(additionalRDNSet.get(counter));
         }
@@ -341,9 +333,8 @@ public class FDN {
     
     public RDN extractRDNViaQualifier(String qualifier){
         LOG.trace(".extractRDNViaQualifier(): Entry, qualifier --> {}",qualifier );
-        for (int counter = 0; counter < this.getRDNCount(); counter++) {
-            RDN currentRDN = this.rdnSet.get(counter);
-            boolean matches = currentRDN.getNameQualifier().contentEquals(qualifier);
+        for (RDN currentRDN: this.rdnSet) {
+            boolean matches = currentRDN.getQualifier().contentEquals(qualifier);
             if(matches){
                 return(currentRDN);
             }

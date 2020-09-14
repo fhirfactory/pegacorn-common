@@ -34,8 +34,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class RDN {
 	private static final Logger LOG = LoggerFactory.getLogger(RDN.class);
 
-	private String nameValue;
-	private String nameQualifier;
+	private String qualifier;
+	private String value;
 
 	@JsonIgnore
 	public static String RDN_SEPARATOR = "=";
@@ -52,16 +52,16 @@ public class RDN {
 	private String rdnAsConciseString;
 
 	@JsonIgnore
-	public RDN(String nameQualifier, String nameValue) {
-		LOG.debug(".RND(String, String): Entry, nameQualifier --> {}, nameValue --> {}", nameQualifier, nameValue);
-		if ((nameQualifier == null) || (nameValue == null)) {
-			throw (new IllegalArgumentException("null nameQualifier or nameValue passed to Constructor"));
+	public RDN(String qualifier, String value) {
+		LOG.debug(".RND(String, String): Entry, Qualifier --> {}, Value --> {}", qualifier, value);
+		if ((qualifier == null) || (value == null)) {
+			throw (new IllegalArgumentException("null name or nameValue passed to Constructor"));
 		}
-		if ((nameQualifier.isEmpty()) || (nameValue.isEmpty())) {
-			throw (new IllegalArgumentException("Empty nameQualifier or nameValue passed to Constructor"));
+		if ((qualifier.isEmpty()) || (value.isEmpty())) {
+			throw (new IllegalArgumentException("Empty name or nameValue passed to Constructor"));
 		}
-		this.nameValue = new String(nameValue);
-		this.nameQualifier = new String(nameQualifier);
+		this.qualifier = qualifier;
+		this.value = value;
 		convertToString();
 		createToken();
 		convertToConciseString();
@@ -72,8 +72,8 @@ public class RDN {
 		if (otherRDN == null) {
 			throw (new IllegalArgumentException("null otherRDN passed to copy Constructor"));
 		}
-		this.nameQualifier = new String(otherRDN.getNameQualifier());
-		this.nameValue = new String(otherRDN.getNameValue());
+		this.value = new String(otherRDN.getValue());
+		this.qualifier = new String(otherRDN.getQualifier());
 		convertToString();
 		createToken();
 		convertToConciseString();
@@ -93,8 +93,8 @@ public class RDN {
 				throw (new IllegalArgumentException("invalid RDNToken passed to Constructor"));
 			}
 			LOG.trace(".RND(RDNToken): JSONObject has both Type and Value entries!");
-			this.nameQualifier = new String(jsonToken.getString(tokenEntryQualifierForQualifier));
-			this.nameValue = new String(jsonToken.getString(tokenEntryQualifierForValue));
+			this.qualifier = new String(jsonToken.getString(tokenEntryQualifierForQualifier));
+			this.value = new String(jsonToken.getString(tokenEntryQualifierForValue));
 		} catch (Exception jsonEx) {
 			throw (new IllegalArgumentException(jsonEx.getMessage()));
 		}
@@ -105,24 +105,24 @@ public class RDN {
 		LOG.trace(".RND(RDNToken): new RDN --> {}", this.rdnToString);
 	}
 
-	public String getNameQualifier() {
-		return (this.nameQualifier);
+	public String getValue() {
+		return (this.value);
 	}
 
 	@JsonIgnore
-	public void setNameQualifier(String newNameType) {
-		this.nameQualifier = new String(newNameType);
+	public void setValue(String newValue) {
+		this.value = newValue;
 		convertToString();
 		createToken();
 	}
 
-	public String getNameValue() {
-		return (this.nameValue);
+	public String getQualifier() {
+		return (this.qualifier);
 	}
 
 	@JsonIgnore
-	public void setNameValue(String newNameValue) {
-		this.nameValue = new String(newNameValue);
+	public void setQualifier(String newQaulifier) {
+		this.qualifier = newQaulifier;
 		convertToString();
 		createToken();
 	}
@@ -134,14 +134,14 @@ public class RDN {
 
 	@JsonIgnore
 	private void convertToString() {
-		this.rdnToString = "[RDN=(" + this.nameQualifier + RDN_SEPARATOR + this.nameValue + ")]";
+		this.rdnToString = "[RDN=(" + this.getQualifier() + RDN_SEPARATOR + this.getValue() + ")]";
 	}
 
 	@JsonIgnore
 	private void createToken() {
 		JSONObject newToken = new JSONObject();
-		newToken.put(tokenEntryQualifierForQualifier, this.nameQualifier);
-		newToken.put(tokenEntryQualifierForValue, this.nameValue);
+		newToken.put(tokenEntryQualifierForQualifier, this.getQualifier());
+		newToken.put(tokenEntryQualifierForValue, this.getValue());
 		this.token = new RDNToken(newToken.toString());
 	}
 
@@ -155,10 +155,10 @@ public class RDN {
 	}
 	
 	private void convertToConciseString() {
-		this.rdnAsConciseString = "("+ this.nameQualifier + RDN_SEPARATOR + this.nameValue + ")";
+		this.rdnAsConciseString = "("+ this.getQualifier() + RDN_SEPARATOR + this.getValue() + ")";
 	}
 
-	public String getUnqualifiedName(){
-		return(getNameValue());
+	public String getUnqualifiedValue(){
+		return(getValue());
 	}
 }

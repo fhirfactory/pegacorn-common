@@ -21,7 +21,7 @@
  */
 package net.fhirfactory.pegacorn.common.model;
 
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class FDNToken {
@@ -56,16 +56,16 @@ public class FDNToken {
     private String makeSimpleString(){
         FDN tempFDN = new FDN(this);
         String simpleString = "SimpleFDN=";
-        Map<Integer, RDN> rdnSet = tempFDN.getRDNSet();
+        ArrayList<RDN> rdnSet = tempFDN.getRDNSet();
         int setSize = rdnSet.size();
         for (int counter = 0; counter < setSize; counter++) {
             RDN currentRDN = rdnSet.get(counter);
-            String currentNameValue = currentRDN.getNameValue();
-            if(currentNameValue.contains(".")){
-                String outputString = currentNameValue.replace(".", "_");
+            String currentValue = currentRDN.getValue();
+            if(currentValue.contains(".")){
+                String outputString = currentValue.replace(".", "_");
                 simpleString = simpleString + outputString;
             } else {
-                simpleString = simpleString + currentNameValue;
+                simpleString = simpleString + currentValue;
             }
             if(counter < (setSize - 1)){
                 simpleString = simpleString + ".";
@@ -90,5 +90,28 @@ public class FDNToken {
     @Override
     public int hashCode() {
         return Objects.hash(getContent());
+    }
+
+    public String toTag(){
+        String tag = new String();
+        FDNToken tempToken = new FDNToken();
+        tempToken.setContent(this.getContent());
+        FDN tempFDN = new FDN(tempToken);
+        int setSize = tempFDN.getRDNSet().size();
+        int counter = 0;
+        for (RDN currentRDN: tempFDN.getRDNSet()){
+            String rdnValueEntry = currentRDN.getValue();
+            if (rdnValueEntry.contains(".")) {
+                String outputString = rdnValueEntry.replace(".", "_");
+                tag = tag + outputString;
+            } else {
+                tag = tag + rdnValueEntry;
+            }
+            if (counter < (setSize - 1)) {
+                tag = tag + ".";
+            }
+            counter++;
+        }
+        return(tag);
     }
 }
