@@ -4,6 +4,8 @@ import java.util.Locale;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Based on ca.uhn.fhir.jpa.starter.HapiProperties, where properties can be overridden with environment variables
@@ -11,44 +13,48 @@ import org.apache.commons.lang3.StringUtils;
  * @author Jasen Schremmer
  */
 public class PegacornProperties {
+    private static final Logger LOG = LoggerFactory.getLogger(PegacornProperties.class);
 
     private static Properties getProperties() {
         return null; //TODO do we want to load defaults from somewhere?
     }
     
-    public static String getProperty(String propertyName) {
+    public static String getProperty(String propertyName, String defaultValue) {
         String env = propertyName.toUpperCase(Locale.US);
         env = env.replace(".", "_");
         env = env.replace("-", "_");
 
-        String propertyValue = System.getenv(env);
-        if (propertyValue == null) {
+        String logMsg = null;
+        
+        String value = System.getenv(env);
+        if (StringUtils.isNotBlank(value)) {
+            logMsg = "Found value in environment variable";
+            if (! propertyName.equals(env)) {
+                logMsg = logMsg + " " + env;
+            }
+        } else {
             Properties properties = getProperties();
             if (properties != null) {
-                propertyValue = properties.getProperty(propertyName);
+                value = properties.getProperty(propertyName);
+            }
+            if (StringUtils.isNotBlank(value)) {
+                logMsg = "Found value in properties";
+            } else {
+                value = defaultValue;
+                logMsg = "Using default value";                
             }
         }
 
-        return propertyValue == null ? null : propertyValue.trim();
-    }
-
-    public static String getProperty(String propertyName, String defaultValue) {
-        String value = getProperty(propertyName);
-
-        if (StringUtils.isEmpty(value)) {
-            return defaultValue;
-        }
+        value = value == null ? null : value.trim();
+        
+        //Log at warning level so the logs are always shown
+        LOG.warn("In PegacornProperties.getProperty(" + propertyName + ") " + logMsg + " " + value);
 
         return value;
     }
 
     public static Boolean getBooleanProperty(String propertyName, Boolean defaultValue) {
-        String value = getProperty(propertyName);
-
-        if (StringUtils.isEmpty(value)) {
-            return defaultValue;
-        }
-
+        String value = getProperty(propertyName, String.valueOf(defaultValue));
         return Boolean.parseBoolean(value);
     }
 
@@ -57,12 +63,7 @@ public class PegacornProperties {
     }
 
     public static Integer getIntegerProperty(String propertyName, Integer defaultValue) {
-        String value = getProperty(propertyName);
-
-        if (StringUtils.isEmpty(value)) {
-            return defaultValue;
-        }
-
+        String value = getProperty(propertyName, String.valueOf(defaultValue));
         return Integer.parseInt(value);
     }
     
