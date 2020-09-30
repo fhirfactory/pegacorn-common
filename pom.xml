@@ -49,20 +49,16 @@
         <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
-            <version>1</version>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>org.hl7.fhir.r4</artifactId>
             <version>${version-ca.uhn.hapi.fhir}</version>
-            <type>jar</type>
         </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>${version-org.apache.commons-lang3}</version>
         </dependency>
 
         <!-- JSON Encoding/Decoding Libraries -->
@@ -70,21 +66,17 @@
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>${version-org.json}</version>
-            <type>jar</type>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${version-com.fasterxml.jackson.core-jackson-databind}</version>
-            <type>jar</type>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-io</artifactId>
             <version>${version-org.eclipse.jetty.plugin-9}</version>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>javax.enterprise</groupId>
@@ -97,7 +89,6 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
         </dependency>
     </dependencies>
 
@@ -106,7 +97,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${version-org.apache.maven-compiler-plugin}</version>
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
@@ -115,7 +105,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${version-org.apache.maven-surefire-plugin}</version>
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
