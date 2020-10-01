@@ -53,6 +53,14 @@ public class PegacornProperties {
         return value;
     }
 
+    public static String getMandatoryProperty(String propertyName) {
+        String value = getProperty(propertyName, StringUtils.EMPTY);
+        if (StringUtils.isBlank(value)) {
+            throw new IllegalStateException("A value for property " + propertyName + " must be provided");
+        }
+        return value;
+    }
+            
     public static Boolean getBooleanProperty(String propertyName, Boolean defaultValue) {
         String value = getProperty(propertyName, String.valueOf(defaultValue));
         return Boolean.parseBoolean(value);
