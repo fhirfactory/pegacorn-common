@@ -43,7 +43,6 @@ public class FDN {
     private static final Logger LOG = LoggerFactory.getLogger(FDN.class);
     private ArrayList<RDN> rdnSet;
     private String FDNType;
-    private Integer rdnCount;
     private FDNToken token;
     private String fdnToString;
     private String unqualifiedToken;
@@ -60,7 +59,6 @@ public class FDN {
     public FDN() {
         LOG.trace(".FDN(): Default constructor invoked.");
         this.rdnSet = new ArrayList<RDN>();
-        this.rdnCount = 0;
         LOG.trace(".FDN(): this.rdnElementSet intialised.");
         this.token = new FDNToken();
         this.fdnToString = new String();
@@ -82,7 +80,6 @@ public class FDN {
         // create new RDN's from the content, and append these RDN's (in the 
         // appropriate order) into the new FDN.
         this.rdnSet = new ArrayList<RDN>();
-        this.rdnCount = originalFDN.getRDNCount();
         ArrayList<RDN> otherRDNSet = originalFDN.getRDNSet();
         if (otherRDNSet.size() != originalFDN.getRDNCount()) {
             throw (new IllegalArgumentException("Malformed FDN passed to copy Constructor"));
@@ -136,7 +133,6 @@ public class FDN {
                 LOG.trace(".FDN( FDNToken token ): Iterating through the extracted RDNs, current RDN --> {}", currentRDN);
                 this.rdnSet.add(counter, currentRDN);
             }
-            this.rdnCount = setSize;
         } catch (Exception jsonEx) {
             throw (new IllegalArgumentException(jsonEx.getMessage()));
 
@@ -163,7 +159,6 @@ public class FDN {
         RDN newRDN = new RDN(toBeAddedRDN);
         int existingSetSize = this.getRDNCount();
         this.rdnSet.add(existingSetSize, newRDN);
-        this.rdnCount = existingSetSize + 1;
         // We need to pre-build the toString() and getToken() content so we don't re-do it 
         // every time we do some comparison etc.
         generateToString();
@@ -246,7 +241,7 @@ public class FDN {
 
     public int getRDNCount() {
         LOG.trace(".getRDNCount(): Entry/Exit");
-        return (this.rdnCount);
+        return (this.rdnSet.size());
     }
 
     public FDNToken getToken() {
@@ -355,6 +350,6 @@ public class FDN {
 
     @Override
     public int hashCode() {
-        return Objects.hash(rdnSet, rdnCount);
+        return Objects.hash(rdnSet);
     }
 }
