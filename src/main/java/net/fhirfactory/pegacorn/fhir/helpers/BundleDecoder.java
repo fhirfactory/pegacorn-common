@@ -13,11 +13,11 @@ public class BundleDecoder {
         if(bundleResource == null){
             return(null);
         }
-        if(bundleResource.getType() != Bundle.BundleType.MESSAGE){
+        if(! bundleResource.getType().equals(Bundle.BundleType.MESSAGE)){
             return(null);
         }
         for(Bundle.BundleEntryComponent entry: bundleResource.getEntry()){
-            if(entry.getResource().getResourceType() == ResourceType.MessageHeader){
+            if(entry.getResource().getResourceType().equals(ResourceType.MessageHeader)){
                 return((MessageHeader)entry.getResource());
             }
         }
