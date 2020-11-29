@@ -21,6 +21,8 @@
  */
 package net.fhirfactory.pegacorn.common.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -113,5 +115,13 @@ public class FDNToken {
             counter++;
         }
         return(tag);
+    }
+
+    @JsonIgnore
+    public String getUnqualifiedToken(){
+        FDNToken tempToken = new FDNToken();
+        tempToken.setContent(this.getContent());
+        FDN tempFDN = new FDN(tempToken);
+        return(tempFDN.getUnqualifiedToken());
     }
 }
