@@ -266,14 +266,13 @@ public class FDN {
     private void generateUnqualifiedToken() {
         LOG.trace(".generateUnqualifiedToken(): Entry");
         String newUnqualifiedToken = new String();
-        int depthCount = 0;
         for (int counter = 0; counter < this.getRDNCount(); counter++) {
             RDN currentRDN = this.rdnSet.get(counter);
-            newUnqualifiedToken = newUnqualifiedToken + "{" + currentRDN.getValue();
-            depthCount++;
-        }
-        for (int depthCounter = 0; depthCounter < depthCount; depthCounter++) {
-            newUnqualifiedToken = newUnqualifiedToken + "}";
+            String value = currentRDN.getValue().replace(".", "_");
+            newUnqualifiedToken = newUnqualifiedToken + value;
+            if(counter < (this.getRDNCount()-1)){
+                newUnqualifiedToken = newUnqualifiedToken + ".";
+            }
         }
         this.unqualifiedToken = newUnqualifiedToken;
         LOG.trace(".generateUnqualifiedToken(): Exit");

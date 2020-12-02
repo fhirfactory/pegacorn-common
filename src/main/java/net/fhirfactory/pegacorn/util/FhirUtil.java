@@ -3,6 +3,9 @@ package net.fhirfactory.pegacorn.util;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+
 public class FhirUtil {
     private static FhirUtil INSTANCE = new FhirUtil();
     public static FhirUtil getInstance() {
