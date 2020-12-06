@@ -4,17 +4,13 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import javax.enterprise.inject.Produces;
+@ApplicationScoped
+public class FHIRContextUtility {
 
-public class FhirUtil {
-    private static FhirUtil INSTANCE = new FhirUtil();
-    public static FhirUtil getInstance() {
-        return INSTANCE;
-    }
-    
     private FhirContext fhirContext;
 
-    private FhirUtil() {
+    public FHIRContextUtility() {
         fhirContext = FhirContext.forR4();
     }
     
@@ -32,6 +28,7 @@ public class FhirUtil {
      * 
      * @see {IParser.newJsonParser()}
      */
+    @Produces
     public IParser getJsonParser() {
         return getFhirContext().newJsonParser();
     }
